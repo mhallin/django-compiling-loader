@@ -1,4 +1,5 @@
 import ast
+import collections.abc
 
 EMIT_ARG_NAME = '$emit$'
 CONTEXT_ARG_NAME = '$context$'
@@ -8,6 +9,7 @@ class CompilerState:
     def __init__(self):
         self._ivar_counter = 0
         self.ivars = {}
+        self._ivar_values = {}
 
         self._local_var_counter = 0
         self._global_var_counter = 0
@@ -16,10 +18,16 @@ class CompilerState:
         self._imported_names = {}
 
     def add_ivar(self, value):
-        key = '$val{}$'.format(self._ivar_counter)
-        self._ivar_counter += 1
+        if value in self._ivar_values:
+            key = self._ivar_values[value]
+        else:
+            key = '$val{}$'.format(self._ivar_counter)
+            self._ivar_counter += 1
 
-        self.ivars[key] = value
+            self.ivars[key] = value
+
+            if isinstance(value, collections.abc.Hashable):
+                self._ivar_values[value] = key
 
         return ast.Attribute(
             value=self.self_expr,
