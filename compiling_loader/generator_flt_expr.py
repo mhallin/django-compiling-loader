@@ -17,8 +17,6 @@ def generate_filter_expression(filter_expression, state):
 def _generate_filter(func, first_arg, args, state):
     arg_vals = []
 
-    print('generate filter', args)
-
     for lookup, arg in args:
         if not lookup:
             arg_vals.append(state.add_ivar(arg))
