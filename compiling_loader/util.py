@@ -14,15 +14,27 @@ def copy_location(dest_node, src_node):
     return dest_node
 
 
-def wrap_emit_expr(n, compiler_state):
+def wrap_emit_expr(n, state):
     if isinstance(n, ast.stmt):
         return n
 
     emit_call = ast.Call(
-        func=compiler_state.emit_expr,
+        func=state.emit_expr,
         args=[n],
         keywords=[])
 
     expr = ast.copy_location(ast.Expr(value=emit_call), n)
 
     return expr
+
+
+def generate_resolve_variable(variable, state):
+    return ast.Call(
+        func=ast.Attribute(
+            value=ast.Name(
+                id='self',
+                ctx=ast.Load()),
+            attr='try_resolve',
+            ctx=ast.Load()),
+        args=[state.add_ivar(variable), state.context_expr],
+        keywords=[])

@@ -2,9 +2,9 @@ import ast
 
 from functools import singledispatch
 
-from django.template.base import TextNode
+from django.template.base import TextNode, VariableNode
 
-from . import util
+from . import util, generator_flt_expr
 
 
 @singledispatch
@@ -13,11 +13,30 @@ def generate_expression(node, compiler_state):
 
 
 @generate_expression.register(TextNode)
-def _(node, compiler_state):
+def _generate_text_node(node, compiler_state):
     return util.copy_location(
         ast.Str(s=node.s),
         node
     )
+
+
+@generate_expression.register(VariableNode)
+def _generate_variable_node(node, compiler_state):
+    filter_expression = node.filter_expression
+
+    output = generator_flt_expr.generate_filter_expression(
+        filter_expression,
+        compiler_state)
+
+    render_value_func_name = compiler_state.add_import(
+        'django.template.base', 'render_value_in_context')
+
+    return util.copy_location(
+        ast.Call(
+            func=render_value_func_name,
+            args=[output, compiler_state.context_expr],
+            keywords=[]),
+        node)
 
 
 def generate_nodelist(nodelist, compiler_state):

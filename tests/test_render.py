@@ -25,7 +25,14 @@ def test_simple():
 
 @pytest.mark.parametrize('s,ctx', [
     ('{{ var }}', {}),
-    ('{{ var }}', {'var': 'test'})
+    ('{{ var }}', {'var': 'test'}),
+    ('{{ var|upper }}', {}),
+    ('{{ var|upper }}', {'var': 'test'}),
+    ('{{ var|first|slugify }}', {'var': ['a banana', 'a thing', 'avocado']}),
+    ('{{ var|default:"empty" }}', {}),
+    ('{{ var|default:other }}', {'other': 'mango'}),
+    ('{{ var }}', {'var': '<html>'}),
+    ('{c var|default:other }}', {'other': '<html>'})
 ])
 def test_variables(s, ctx):
     assert_equal(s, ctx)

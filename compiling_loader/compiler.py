@@ -2,6 +2,8 @@ import ast
 
 from io import StringIO
 
+from django.template.base import VariableDoesNotExist
+
 from . import generator, compiler_state
 
 
@@ -11,6 +13,12 @@ class CompiledTemplate(object):
 
         for key, val in state.ivars.items():
             setattr(self, key, val)
+
+    def try_resolve(self, var, context):
+        try:
+            return var.resolve(context)
+        except VariableDoesNotExist:
+            return ''
 
     def render(self, context):
         buf = StringIO()
@@ -48,11 +56,11 @@ def convert_template(template, state):
     f.decorator_list = []
 
     m = ast.copy_location(ast.Module(), body[0])
-    m.body = [f]
+    m.body = state.imports + [f]
 
     ast.fix_missing_locations(m)
 
-    print(template.nodelist, ast.dump(f))
+    print(template.nodelist, ast.dump(m))
 
     return m, {}
 
@@ -63,7 +71,6 @@ def compile_template(template, name):
     code_mod = compile(ast_mod, name, 'exec')
 
     g = {}
-    l = {}
-    exec(code_mod, g, l)
+    exec(code_mod, g, g)
 
-    return CompiledTemplate(l['render'], state)
+    return CompiledTemplate(g['render'], state)
