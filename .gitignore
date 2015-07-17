@@ -1,0 +1,12 @@
+*~
+
+__pycache__/
+*.py[cod]
+
+bin/
+build/
+dist/
+*.egg-info/
+MANIFEST
+
+.coverage
