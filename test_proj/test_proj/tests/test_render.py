@@ -60,41 +60,40 @@ def assert_rendered_equally(settings, template_name, ctx_dict, expected=None):
 @pytest.mark.parametrize('template_name', [
     'empty.html',
     'simple.html',
+])
+def test_simple_no_context(settings, template_name):
+    assert_rendered_equally(settings, template_name, {})
+
+
+@pytest.mark.parametrize('template_name', [
     'var.html',
     'var_default.html',
     'var_default_var.html',
     'var_filters.html',
 ])
-def test_no_context(settings, template_name):
-    assert_rendered_equally(settings, template_name, {})
-
-
-@pytest.mark.parametrize('template_name,ctx_dict', [
-    ('var.html', {'var': ''}),
-    ('var.html', {'var': 'test'}),
-    ('var_default.html', {'var': ''}),
-    ('var_default.html', {'var': 'test'}),
-    ('var_default_var.html', {'var': ''}),
-    ('var_default_var.html', {'var': '', 'other': ''}),
-    ('var_default_var.html', {'var': '', 'other': 'other'}),
-    ('var_default_var.html', {'var': 'test'}),
-    ('var_default_var.html', {'var': 'test', 'other': ''}),
-    ('var_default_var.html', {'var': 'test', 'other': 'other'}),
-    ('var_filters.html', {'var': ''}),
-    ('var_filters.html', {'var': 'test'}),
+@pytest.mark.parametrize('ctx_dict', [
+    {},
+    {'var': ''},
+    {'var': '', 'other': ''},
+    {'var': '', 'other': 'other'},
+    {'var': 'test'},
+    {'var': 'test', 'other': ''},
+    {'var': 'test', 'other': 'other'},
+    {'other': ''},
+    {'other': 'other'},
 ])
-def test_var_filter_lookup(settings, template_name, ctx_dict):
+def test_two_vars(settings, template_name, ctx_dict):
     assert_rendered_equally(settings, template_name, ctx_dict)
 
 
-@pytest.mark.parametrize('template_name,ctx_dict', [
-    ('var.html', {'var': '<html>'}),
-    ('var_default_html.html', {'var': '<html>'}),
-    ('var_default_var.html', {'var': '<html>'}),
-    ('var_filters.html', {'var': '<html>'}),
+@pytest.mark.parametrize('template_name', [
+    'var.html',
+    'var_default_html.html',
+    'var_default_var.html',
+    'var_filters.html',
 ])
-def test_var_escaping(settings, template_name, ctx_dict):
-    assert_rendered_equally(settings, template_name, ctx_dict)
+def test_var_escaping(settings, template_name):
+    assert_rendered_equally(settings, template_name, {'var': '<html>'})
 
 
 @pytest.mark.parametrize('template_name,ctx_dict', [
