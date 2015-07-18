@@ -61,7 +61,7 @@ def convert_template(template, state):
 
     ast.fix_missing_locations(m)
 
-    print(template.nodelist, ast.dump(m))
+    # print(template.nodelist, ast.dump(m))
 
     return m, {}
 

@@ -6,7 +6,8 @@ from . import util
 def generate_filter_expression(filter_expression, state):
     result = util.generate_resolve_variable(
         filter_expression.var,
-        state)
+        state,
+        ignore_errors=True)
 
     for func, args in filter_expression.filters:
         result = _generate_filter(func, result, args, state)
@@ -23,7 +24,8 @@ def _generate_filter(func, first_arg, args, state):
         else:
             arg_vals.append(util.generate_resolve_variable(
                 arg,
-                state))
+                state,
+                ignore_errors=False))
 
     return ast.Call(
         func=state.add_ivar(func),

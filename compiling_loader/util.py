@@ -28,13 +28,22 @@ def wrap_emit_expr(n, state):
     return expr
 
 
-def generate_resolve_variable(variable, state):
-    return ast.Call(
-        func=ast.Attribute(
-            value=ast.Name(
-                id='self',
+def generate_resolve_variable(variable, state, ignore_errors):
+    if ignore_errors:
+        return ast.Call(
+            func=ast.Attribute(
+                value=ast.Name(
+                    id='self',
+                    ctx=ast.Load()),
+                attr='try_resolve',
                 ctx=ast.Load()),
-            attr='try_resolve',
-            ctx=ast.Load()),
-        args=[state.add_ivar_var(variable), state.context_expr],
-        keywords=[])
+            args=[state.add_ivar_var(variable), state.context_expr],
+            keywords=[])
+    else:
+        return ast.Call(
+            func=ast.Attribute(
+                value=state.add_ivar_var(variable),
+                attr='resolve',
+                ctx=ast.Load()),
+            args=[state.context_expr],
+            keywords=[])

@@ -9,6 +9,7 @@ setup(
         'test': [
             'pytest',
             'pytest-cov',
+            'hypothesis',
         ],
     },
 )
