@@ -23,6 +23,28 @@ class CompilerState:
         self.helper_functions = []
         self._helper_function_counter = 0
 
+        self.render_methods = {}
+
+    def build_module(self):
+        template_class = ast.ClassDef(
+            name='CompiledTemplate',
+            bases=[],
+            keywords=[],
+            starargs=None,
+            kwargs=None,
+            decorator_list=[],
+            body=list(self.render_methods.values()),
+        )
+
+        module = ast.Module(
+            body=self.imports + self.helper_functions + [template_class],
+            lineno=1,
+            col_offset=0)
+
+        ast.fix_missing_locations(module)
+
+        return module
+
     def make_function_def(self, body, name):
         return ast.FunctionDef(
             name=name,
@@ -39,9 +61,6 @@ class CompilerState:
         )
 
     def make_render_function_def(self, body, name):
-        if not body:
-            body.append(ast.Pass(lineno=1, col_offset=1))
-
         io_name = self.add_import('io', 'StringIO')
 
         buf_var_name = self.new_local_var()
@@ -76,6 +95,11 @@ class CompilerState:
         return self.make_function_def(
             [buf_assign, emit_assign] + body + [result_return],
             name)
+
+    def add_render_function(self, body, name):
+        assert name not in self.render_methods
+
+        self.render_methods[name] = self.make_render_function_def(body, name)
 
     def add_helper_function(self, body):
         name = '$helper{}$'.format(self._helper_function_counter)

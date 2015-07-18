@@ -1,5 +1,7 @@
 import ast
 
+from django.template.base import VariableDoesNotExist
+
 
 def copy_location(dest_node, src_node):
     if hasattr(src_node, 'source'):
@@ -39,12 +41,7 @@ def generate_resolve_variable(variable,
             fallback_arg = [fallback_value]
 
         return ast.Call(
-            func=ast.Attribute(
-                value=ast.Name(
-                    id='self',
-                    ctx=ast.Load()),
-                attr='try_resolve',
-                ctx=ast.Load()),
+            func=state.add_import('compiling_loader.util', 'try_resolve'),
             args=[
                 state.add_ivar_var(variable),
                 state.context_expr] + fallback_arg,
@@ -57,3 +54,10 @@ def generate_resolve_variable(variable,
                 ctx=ast.Load()),
             args=[state.context_expr],
             keywords=[])
+
+
+def try_resolve(var, context, or_else=''):
+    try:
+        return var.resolve(context)
+    except VariableDoesNotExist:
+        return or_else
