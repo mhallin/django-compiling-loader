@@ -74,6 +74,14 @@ def test_simple_no_context(settings, template_name):
     'if_elif.html',
     'if_elif_else.html',
     'if_else.html',
+    'if_eq.html',
+    'if_eqeq.html',
+    'if_or.html',
+    'if_and.html',
+    'if_not.html',
+    'if_in.html',
+    'if_not_in.html',
+    'if_neq.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},
@@ -87,6 +95,23 @@ def test_simple_no_context(settings, template_name):
     {'other': 'other'},
 ])
 def test_two_vars(settings, template_name, ctx_dict):
+    assert_rendered_equally(settings, template_name, ctx_dict)
+
+
+@pytest.mark.parametrize('template_name', [
+    'if_gt.html',
+    'if_ge.html',
+    'if_lt.html',
+    'if_le.html',
+])
+@pytest.mark.parametrize('ctx_dict', [
+    {},
+    {'var': 'not a number'},
+    {'var': 5},
+    {'var': 10},
+    {'var': 15},
+])
+def test_integer_var(settings, template_name, ctx_dict):
     assert_rendered_equally(settings, template_name, ctx_dict)
 
 

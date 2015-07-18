@@ -3,17 +3,7 @@ import ast
 from django.template import defaulttags
 
 from .generator import generate_expression, generate_nodelist
-from . import util
-
-
-def _generate_if_condition(condition, state):
-    return ast.Call(
-        func=ast.Attribute(
-            value=state.add_ivar(condition),
-            attr='eval',
-            ctx=ast.Load()),
-        args=[state.context_expr],
-        keywords=[])
+from . import util, generator_smartif
 
 
 @generate_expression.register(defaulttags.IfNode)
@@ -28,11 +18,10 @@ def _generate_if_node(node, state):
                 ast_node.orelse = [new_ast_node]
                 ast_node = new_ast_node
 
-            ast_node.test = _generate_if_condition(condition, state)
+            ast_node.test = generator_smartif.generate_condition(
+                condition, state)
             ast_node.body = generate_nodelist(nodelist, state)
         else:
             ast_node.orelse = generate_nodelist(nodelist, state)
-
-    print(ast.dump(ast_node))
 
     return util.copy_location(orig_ast_node, node)

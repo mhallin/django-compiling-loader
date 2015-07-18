@@ -40,7 +40,7 @@ class Loader(object):
         if result is None:
             raise TemplateDoesNotExist(name)
 
-        return compile_template(template, name), display_name
+        return compile_template(template), display_name
 
     def load_template_source(self, template_name, template_dirs=None):
         raise NotImplementedError('Can not implement this one...')

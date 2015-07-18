@@ -20,16 +20,56 @@ class CompilerState:
         self.imports = []
         self._imported_names = {}
 
+        self.helper_functions = []
+        self._helper_function_counter = 0
+
+    def add_helper_function(self, body):
+        name = '$helper{}$'.format(self._helper_function_counter)
+        self._helper_function_counter += 1
+
+        function_def = ast.FunctionDef(
+            name=name,
+            body=body,
+            args=ast.arguments(
+                args=[
+                    ast.arg(arg='self'),
+                    ast.arg(arg=EMIT_ARG_NAME),
+                    ast.arg(arg=CONTEXT_ARG_NAME),
+                ],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[]),
+            decorator_list=[],
+        )
+
+        self.helper_functions.append(function_def)
+
+        return ast.Call(
+            func=ast.Name(
+                id=name,
+                ctx=ast.Load()),
+            args=[
+                ast.Name(id='self', ctx=ast.Load()),
+                ast.Name(id=EMIT_ARG_NAME, ctx=ast.Load()),
+                ast.Name(id=CONTEXT_ARG_NAME, ctx=ast.Load()),
+            ],
+            keywords=[])
+
     def add_ivar_var(self, var):
-        if var.var in self._ivar_var_values:
-            key = self._ivar_var_values[var.var]
+        if isinstance(var, str):
+            var_name = var
+        else:
+            var_name = var.var
+
+        if var_name in self._ivar_var_values:
+            key = self._ivar_var_values[var_name]
         else:
             key = 'ivar_var_{}'.format(self._ivar_var_counter)
             self._ivar_var_counter += 1
 
             self.ivars[key] = var
 
-            self._ivar_var_values[var.var] = key
+            self._ivar_var_values[var_name] = key
 
         return ast.Attribute(
             value=self.self_expr,

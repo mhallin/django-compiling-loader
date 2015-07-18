@@ -3,11 +3,15 @@ import ast
 from . import util
 
 
-def generate_filter_expression(filter_expression, state):
-    result = util.generate_resolve_variable(
-        filter_expression.var,
-        state,
-        ignore_errors=True)
+def generate_filter_expression(filter_expression, state, fallback_value=None):
+    if isinstance(filter_expression.var, str):
+        result = state.add_ivar(filter_expression.var)
+    else:
+        result = util.generate_resolve_variable(
+            filter_expression.var,
+            state,
+            ignore_errors=True,
+            fallback_value=fallback_value)
 
     for func, args in filter_expression.filters:
         result = _generate_filter(func, result, args, state)

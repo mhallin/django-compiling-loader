@@ -28,8 +28,16 @@ def wrap_emit_expr(n, state):
     return expr
 
 
-def generate_resolve_variable(variable, state, ignore_errors):
+def generate_resolve_variable(variable,
+                              state,
+                              ignore_errors,
+                              fallback_value=None):
     if ignore_errors:
+        fallback_arg = []
+
+        if fallback_value:
+            fallback_arg = [fallback_value]
+
         return ast.Call(
             func=ast.Attribute(
                 value=ast.Name(
@@ -37,7 +45,9 @@ def generate_resolve_variable(variable, state, ignore_errors):
                     ctx=ast.Load()),
                 attr='try_resolve',
                 ctx=ast.Load()),
-            args=[state.add_ivar_var(variable), state.context_expr],
+            args=[
+                state.add_ivar_var(variable),
+                state.context_expr] + fallback_arg,
             keywords=[])
     else:
         return ast.Call(
