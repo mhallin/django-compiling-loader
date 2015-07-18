@@ -82,6 +82,7 @@ def test_simple_no_context(settings, template_name):
     'if_in.html',
     'if_not_in.html',
     'if_neq.html',
+    'extend_base.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},
