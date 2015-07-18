@@ -36,5 +36,5 @@ def generate_resolve_variable(variable, state):
                 ctx=ast.Load()),
             attr='try_resolve',
             ctx=ast.Load()),
-        args=[state.add_ivar(variable), state.context_expr],
+        args=[state.add_ivar_var(variable), state.context_expr],
         keywords=[])

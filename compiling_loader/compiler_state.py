@@ -11,17 +11,36 @@ class CompilerState:
         self.ivars = {}
         self._ivar_values = {}
 
+        self._ivar_var_counter = 0
+        self._ivar_var_values = {}
+
         self._local_var_counter = 0
         self._global_var_counter = 0
 
         self.imports = []
         self._imported_names = {}
 
+    def add_ivar_var(self, var):
+        if var.var in self._ivar_var_values:
+            key = self._ivar_var_values[var.var]
+        else:
+            key = 'ivar_var_{}'.format(self._ivar_var_counter)
+            self._ivar_var_counter += 1
+
+            self.ivars[key] = var
+
+            self._ivar_var_values[var.var] = key
+
+        return ast.Attribute(
+            value=self.self_expr,
+            attr=key,
+            ctx=ast.Load())
+
     def add_ivar(self, value):
         if value in self._ivar_values:
             key = self._ivar_values[value]
         else:
-            key = '$val{}$'.format(self._ivar_counter)
+            key = 'ivar_{}'.format(self._ivar_counter)
             self._ivar_counter += 1
 
             self.ivars[key] = value
