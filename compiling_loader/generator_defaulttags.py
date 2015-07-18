@@ -24,4 +24,4 @@ def _generate_if_node(node, state):
         else:
             ast_node.orelse = generate_nodelist(nodelist, state)
 
-    return util.copy_location(orig_ast_node, node)
+    return [], util.copy_location(orig_ast_node, node)

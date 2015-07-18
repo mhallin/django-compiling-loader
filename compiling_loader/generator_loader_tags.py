@@ -13,7 +13,7 @@ def _generate_block_node(node, state):
 
     state.add_render_function(body, block_method_name)
 
-    return ast.Call(
+    return [], ast.Call(
         func=ast.Attribute(
             value=ast.Name(id='self', ctx=ast.Load()),
             attr=block_method_name,

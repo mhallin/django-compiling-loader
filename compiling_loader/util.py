@@ -16,18 +16,25 @@ def copy_location(dest_node, src_node):
     return dest_node
 
 
-def wrap_emit_expr(n, state):
-    if isinstance(n, ast.stmt):
-        return n
+def wrap_emit_expr(ns, state):
+    preamble, result = ns
 
-    emit_call = ast.Call(
-        func=state.emit_expr,
-        args=[n],
-        keywords=[])
+    stmts = []
 
-    expr = ast.copy_location(ast.Expr(value=emit_call), n)
+    for n in preamble + [result]:
+        if isinstance(n, ast.stmt):
+            stmts.append(n)
+        else:
+            emit_call = ast.Call(
+                func=state.emit_expr,
+                args=[n],
+                keywords=[])
 
-    return expr
+            stmt = ast.copy_location(ast.Expr(value=emit_call), n)
+
+            stmts.append(stmt)
+
+    return stmts
 
 
 def generate_resolve_variable(variable,

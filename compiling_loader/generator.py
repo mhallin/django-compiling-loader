@@ -14,7 +14,7 @@ def generate_expression(node, compiler_state):
 
 @generate_expression.register(base.TextNode)
 def _generate_text_node(node, compiler_state):
-    return util.copy_location(
+    return [], util.copy_location(
         ast.Str(s=node.s),
         node
     )
@@ -31,7 +31,7 @@ def _generate_variable_node(node, compiler_state):
     render_value_func_name = compiler_state.add_import(
         'django.template.base', 'render_value_in_context')
 
-    return util.copy_location(
+    return [], util.copy_location(
         ast.Call(
             func=render_value_func_name,
             args=[output, compiler_state.context_expr],
@@ -40,11 +40,16 @@ def _generate_variable_node(node, compiler_state):
 
 
 def generate_nodelist(nodelist, compiler_state):
-    return [
+    stmt_lists = [
         util.wrap_emit_expr(
             generate_expression(n, compiler_state),
             compiler_state)
         for n in nodelist
+    ]
+    return [
+        stmt
+        for stmt_list in stmt_lists
+        for stmt in stmt_list
     ]
 
 
@@ -61,4 +66,4 @@ def generate_fallback(node, compiler_state):
             keywords=[]),
         node)
 
-    return render_call
+    return [], render_call
