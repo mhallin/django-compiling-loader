@@ -1,5 +1,6 @@
 import ast
 
+from collections import namedtuple
 from io import StringIO
 
 from django.template.base import VariableDoesNotExist
@@ -73,4 +74,7 @@ def compile_template(template, name):
     g = {}
     exec(code_mod, g, g)
 
-    return CompiledTemplate(g['render'], state)
+    class ConcreteCompiledTemplate(CompiledTemplate):
+        __slots__ = ['_callback'] + list(state.ivars.keys())
+
+    return ConcreteCompiledTemplate(g['render'], state)
