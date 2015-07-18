@@ -46,6 +46,7 @@ def generate_nodelist(nodelist, compiler_state):
             compiler_state)
         for n in nodelist
     ]
+
     return [
         stmt
         for stmt_list in stmt_lists

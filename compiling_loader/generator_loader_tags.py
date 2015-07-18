@@ -21,3 +21,30 @@ def _generate_block_node(node, state):
         ),
         args=[state.context_expr],
         keywords=[])
+
+
+@generate_expression.register(loader_tags.ExtendsNode)
+def _generate_extends_node(node, state):
+    parent_var_name = state.new_local_var()
+
+    parent_assign = ast.Assign(
+        targets=[
+            ast.Name(id=parent_var_name, ctx=ast.Store()),
+        ],
+        value=ast.Call(
+            func=ast.Attribute(
+                value=state.add_ivar(node),
+                attr='get_parent',
+                ctx=ast.Load()),
+            args=[state.context_expr],
+            keywords=[]))
+
+    parent_render = ast.Call(
+        func=ast.Attribute(
+            value=ast.Name(id=parent_var_name, ctx=ast.Load()),
+            attr='render',
+            ctx=ast.Load()),
+        args=[state.context_expr],
+        keywords=[])
+
+    return [parent_assign], parent_render
