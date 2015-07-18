@@ -70,6 +70,10 @@ def test_simple_no_context(settings, template_name):
     'var_default.html',
     'var_default_var.html',
     'var_filters.html',
+    'if.html',
+    'if_elif.html',
+    'if_elif_else.html',
+    'if_else.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},

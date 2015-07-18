@@ -2,7 +2,7 @@ import ast
 
 from functools import singledispatch
 
-from django.template.base import TextNode, VariableNode
+from django.template import base
 
 from . import util, generator_flt_expr
 
@@ -12,7 +12,7 @@ def generate_expression(node, compiler_state):
     return generate_fallback(node, compiler_state)
 
 
-@generate_expression.register(TextNode)
+@generate_expression.register(base.TextNode)
 def _generate_text_node(node, compiler_state):
     return util.copy_location(
         ast.Str(s=node.s),
@@ -20,7 +20,7 @@ def _generate_text_node(node, compiler_state):
     )
 
 
-@generate_expression.register(VariableNode)
+@generate_expression.register(base.VariableNode)
 def _generate_variable_node(node, compiler_state):
     filter_expression = node.filter_expression
 
