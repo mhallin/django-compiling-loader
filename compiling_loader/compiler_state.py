@@ -23,17 +23,13 @@ class CompilerState:
         self.helper_functions = []
         self._helper_function_counter = 0
 
-    def add_helper_function(self, body):
-        name = '$helper{}$'.format(self._helper_function_counter)
-        self._helper_function_counter += 1
-
-        function_def = ast.FunctionDef(
+    def make_function_def(self, body, name):
+        return ast.FunctionDef(
             name=name,
             body=body,
             args=ast.arguments(
                 args=[
                     ast.arg(arg='self'),
-                    ast.arg(arg=EMIT_ARG_NAME),
                     ast.arg(arg=CONTEXT_ARG_NAME),
                 ],
                 kwonlyargs=[],
@@ -41,6 +37,51 @@ class CompilerState:
                 defaults=[]),
             decorator_list=[],
         )
+
+    def make_render_function_def(self, body, name):
+        if not body:
+            body.append(ast.Pass(lineno=1, col_offset=1))
+
+        io_name = self.add_import('io', 'StringIO')
+
+        buf_var_name = self.new_local_var()
+
+        buf_assign = ast.Assign(
+            targets=[
+                ast.Name(id=buf_var_name, ctx=ast.Store()),
+            ],
+            value=ast.Call(
+                func=io_name,
+                args=[],
+                keywords=[]))
+
+        emit_assign = ast.Assign(
+            targets=[
+                ast.Name(id=EMIT_ARG_NAME, ctx=ast.Store()),
+            ],
+            value=ast.Attribute(
+                value=ast.Name(id=buf_var_name, ctx=ast.Load()),
+                attr='write',
+                ctx=ast.Load()))
+
+        result_return = ast.Return(
+            value=ast.Call(
+                func=ast.Attribute(
+                    value=ast.Name(id=buf_var_name, ctx=ast.Load()),
+                    attr='getvalue',
+                    ctx=ast.Load()),
+                args=[],
+                keywords=[]))
+
+        return self.make_function_def(
+            [buf_assign, emit_assign] + body + [result_return],
+            name)
+
+    def add_helper_function(self, body):
+        name = '$helper{}$'.format(self._helper_function_counter)
+        self._helper_function_counter += 1
+
+        function_def = self.make_function_def(body, name)
 
         self.helper_functions.append(function_def)
 
@@ -50,7 +91,6 @@ class CompilerState:
                 ctx=ast.Load()),
             args=[
                 ast.Name(id='self', ctx=ast.Load()),
-                ast.Name(id=EMIT_ARG_NAME, ctx=ast.Load()),
                 ast.Name(id=CONTEXT_ARG_NAME, ctx=ast.Load()),
             ],
             keywords=[])
