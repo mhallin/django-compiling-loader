@@ -1,6 +1,5 @@
 import ast
 
-from collections import namedtuple
 from io import StringIO
 
 from django.template.base import VariableDoesNotExist

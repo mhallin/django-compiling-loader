@@ -1,12 +1,8 @@
 from django import template
-from django.conf import settings
-from django.template.defaulttags import register
-
-settings.configure()
 
 
 def do_upper(parser, token):
-    nodelist = parser.parse(('endupper', ))
+    nodelist = parser.parse(('endblockupper', ))
     parser.delete_first_token()
     return UpperNode(nodelist)
 
@@ -20,4 +16,5 @@ class UpperNode(template.Node):
         return output.upper()
 
 
+register = template.Library()
 register.tag('blockupper', do_upper)
