@@ -1,0 +1,13 @@
+{% extends "benchmark/layout.html" %}
+
+{% block title %}Main - {{ block.super }}{% endblock title %}
+
+{% block content %}
+
+    <ul>
+        {% for elem in data %}
+            <li style="{{ elem.style }}">{% include "benchmark/fragments/item.html" with item=elem.data only %}</li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

@@ -54,6 +54,16 @@ ROOT_URLCONF = 'test_proj.urls'
 
 WSGI_APPLICATION = 'test_proj.wsgi.application'
 
+TEMPLATE_LOADERS = (
+    ('django.template.loaders.cached.Loader', [
+        ('compiling_loader.Loader', [
+            'django.template.loaders.filesystem.Loader',
+            'django.template.loaders.app_directories.Loader',
+        ]),
+    ]),
+)
+
+
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases

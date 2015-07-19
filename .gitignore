@@ -11,3 +11,5 @@ MANIFEST
 
 .coverage
 .hypothesis
+
+db.sqlite3
