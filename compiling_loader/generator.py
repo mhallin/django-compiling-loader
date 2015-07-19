@@ -3,8 +3,9 @@ import ast
 from functools import singledispatch
 
 from django.template import base
+from django.template.base import render_value_in_context
 
-from . import util, generator_flt_expr
+from . import ast_builder, util, generator_flt_expr
 
 
 @singledispatch
@@ -28,14 +29,10 @@ def _generate_variable_node(node, compiler_state):
         filter_expression,
         compiler_state)
 
-    render_value_func_name = compiler_state.add_import(
-        'django.template.base', 'render_value_in_context')
-
     return [], util.copy_location(
-        ast.Call(
-            func=render_value_func_name,
-            args=[output, compiler_state.context_expr],
-            keywords=[]),
+        ast_builder.build_expr(
+            compiler_state,
+            lambda b: b[render_value_in_context](output, b.context)),
         node)
 
 
@@ -55,16 +52,10 @@ def generate_nodelist(nodelist, compiler_state):
 
 
 def generate_fallback(node, compiler_state):
-    render_attr = ast.Attribute(
-        value=compiler_state.add_ivar(node),
-        attr='render',
-        ctx=ast.Load())
-
     render_call = util.copy_location(
-        ast.Call(
-            func=render_attr,
-            args=[compiler_state.context_expr],
-            keywords=[]),
+        ast_builder.build_expr(
+            compiler_state,
+            lambda b: b.ivars[node].render(b.context)),
         node)
 
     return [], render_call

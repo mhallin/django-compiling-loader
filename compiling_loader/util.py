@@ -2,6 +2,8 @@ import ast
 
 from django.template.base import VariableDoesNotExist
 
+from . import ast_builder
+
 
 def copy_location(dest_node, src_node):
     if isinstance(dest_node, (tuple, list)):
@@ -28,14 +30,9 @@ def wrap_emit_expr(ns, state):
         if isinstance(n, ast.stmt):
             stmts.append(n)
         else:
-            emit_call = ast.Call(
-                func=state.emit_expr,
-                args=[n],
-                keywords=[])
-
-            stmt = ast.copy_location(ast.Expr(value=emit_call), n)
-
-            stmts.append(stmt)
+            stmts.append(ast_builder.build_stmt(
+                state,
+                lambda b: b.emit(n)))
 
     return stmts
 
@@ -45,25 +42,19 @@ def generate_resolve_variable(variable,
                               ignore_errors,
                               fallback_value=None):
     if ignore_errors:
-        fallback_arg = []
-
-        if fallback_value:
-            fallback_arg = [fallback_value]
-
-        return ast.Call(
-            func=state.add_import('compiling_loader.util', 'try_resolve'),
-            args=[
-                state.add_ivar_var(variable),
-                state.context_expr] + fallback_arg,
-            keywords=[])
+        if fallback_value is not None:
+            return ast_builder.build_expr(
+                state,
+                lambda b: b[try_resolve](
+                    b.ivars[variable], b.context, fallback_value))
+        else:
+            return ast_builder.build_expr(
+                state,
+                lambda b: b[try_resolve](b.ivars[variable], b.context))
     else:
-        return ast.Call(
-            func=ast.Attribute(
-                value=state.add_ivar_var(variable),
-                attr='resolve',
-                ctx=ast.Load()),
-            args=[state.context_expr],
-            keywords=[])
+        return ast_builder.build_expr(
+            state,
+            lambda b: b.ivars[variable].resolve(b.context))
 
 
 def try_resolve(var, context, or_else=''):

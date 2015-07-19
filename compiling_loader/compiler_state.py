@@ -1,5 +1,8 @@
 import ast
 import collections.abc
+import io
+
+from . import ast_builder
 
 EMIT_ARG_NAME = '$emit$'
 CONTEXT_ARG_NAME = '$context$'
@@ -61,36 +64,19 @@ class CompilerState:
         )
 
     def make_render_function_def(self, body, name):
-        io_name = self.add_import('io', 'StringIO')
+        buf_var = ast_builder.new_local_var(self, 'buf')
 
-        buf_var_name = self.new_local_var()
+        buf_assign = ast_builder.build_stmt(
+            self,
+            lambda b: b.assign(buf_var, b[io.StringIO]()))
 
-        buf_assign = ast.Assign(
-            targets=[
-                ast.Name(id=buf_var_name, ctx=ast.Store()),
-            ],
-            value=ast.Call(
-                func=io_name,
-                args=[],
-                keywords=[]))
+        emit_assign = ast_builder.build_stmt(
+            self,
+            lambda b: b.assign(b.emit, buf_var.write))
 
-        emit_assign = ast.Assign(
-            targets=[
-                ast.Name(id=EMIT_ARG_NAME, ctx=ast.Store()),
-            ],
-            value=ast.Attribute(
-                value=ast.Name(id=buf_var_name, ctx=ast.Load()),
-                attr='write',
-                ctx=ast.Load()))
-
-        result_return = ast.Return(
-            value=ast.Call(
-                func=ast.Attribute(
-                    value=ast.Name(id=buf_var_name, ctx=ast.Load()),
-                    attr='getvalue',
-                    ctx=ast.Load()),
-                args=[],
-                keywords=[]))
+        result_return = ast_builder.build_stmt(
+            self,
+            lambda b: b.return_(buf_var.getvalue()))
 
         return self.make_function_def(
             [buf_assign, emit_assign] + body + [result_return],
@@ -119,27 +105,6 @@ class CompilerState:
             ],
             keywords=[])
 
-    def add_ivar_var(self, var):
-        if isinstance(var, str):
-            var_name = var
-        else:
-            var_name = var.var
-
-        if var_name in self._ivar_var_values:
-            key = self._ivar_var_values[var_name]
-        else:
-            key = 'ivar_var_{}'.format(self._ivar_var_counter)
-            self._ivar_var_counter += 1
-
-            self.ivars[key] = var
-
-            self._ivar_var_values[var_name] = key
-
-        return ast.Attribute(
-            value=self.self_expr,
-            attr=key,
-            ctx=ast.Load())
-
     def add_ivar(self, value):
         if isinstance(value, collections.abc.Hashable) \
                 and value in self._ivar_values:
@@ -158,8 +123,8 @@ class CompilerState:
             attr=key,
             ctx=ast.Load())
 
-    def new_local_var(self):
-        key = '$local{}$'.format(self._local_var_counter)
+    def new_local_var(self, name):
+        key = '$local{}_{}$'.format(self._local_var_counter, name)
         self._local_var_counter += 1
 
         return key

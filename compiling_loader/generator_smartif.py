@@ -2,7 +2,7 @@ import ast
 
 from django.template import defaulttags
 
-from . import generator_flt_expr
+from . import generator_flt_expr, ast_builder
 
 OPERATORS = {
     'or': lambda x, y: ast.BoolOp(op=ast.Or(), values=[x, y]),
@@ -27,18 +27,11 @@ def generate_condition(condition, state):
     cond = _do_generate_condition(condition, state)
 
     if need_try_catch:
-        try_stmt = ast.Try(
-            body=[
-                ast.Return(value=cond)
-            ],
-            handlers=[
-                ast.ExceptHandler(
-                    type=None,
-                    name=None,
-                    body=[ast.Return(value=ast.NameConstant(value=False))]),
-                ],
-            orelse=[],
-            finalbody=[])
+        try_stmt = ast_builder.build_stmt(
+            state,
+            lambda b: b.try_(
+                b.return_(cond),
+                b.except_(None, None, b.return_(False))))
 
         return state.add_helper_function([try_stmt])
     else:

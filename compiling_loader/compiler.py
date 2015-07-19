@@ -1,3 +1,4 @@
+import ast
 import os.path
 
 from . import generator, compiler_state
