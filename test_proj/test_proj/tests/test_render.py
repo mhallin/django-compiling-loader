@@ -20,15 +20,16 @@ COMPILED_LOADER_SETTINGS = (
 def render(settings, template_name, context):
     loader.template_source_loaders = None
     original = get_template(template_name)
-    original_raises = False
-    original_result = None
+    raises = False
+    result = None
 
     try:
-        original_result = original.render(context)
-    except (VariableDoesNotExist, AttributeError):
-        original_raises = True
+        result = original.render(context)
+    except (VariableDoesNotExist, AttributeError) as e:
+        print('Exception thrown', e)
+        raises = True
 
-    return original_raises, original_result
+    return raises, result
 
 
 def render_native(settings, template_name, context):
@@ -89,6 +90,7 @@ def test_simple_no_context(settings, template_name):
     'extend_child_super_twice.html',
     'extend_child_child_empty.html',
     'extend_base_super.html',
+    'include.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},

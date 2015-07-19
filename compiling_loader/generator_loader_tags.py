@@ -3,6 +3,7 @@ import ast
 from django.template import loader_tags
 
 from .generator import generate_expression, generate_nodelist
+from . import util
 
 
 class BlockWrapper:
@@ -336,3 +337,123 @@ def _generate_extends_node(node, state):
         block_context_assign,
         add_blocks_call], \
         parent_render
+
+
+@generate_expression.register(loader_tags.IncludeNode)
+def _generate_include_node(node, state):
+    template_var = state.new_local_var()
+    values_var = state.new_local_var()
+
+    # template = node.template.resolve(context)
+    template_assign = ast.Assign(
+        targets=[ast.Name(id=template_var, ctx=ast.Store())],
+        value=ast.Call(
+            func=ast.Attribute(
+                value=state.add_ivar(node.template),
+                attr='resolve',
+                ctx=ast.Load()),
+            args=[state.context_expr],
+            keywords=[]))
+
+    # if not callable(getattr(template, 'render', None)):
+    #     template = get_template(template)
+    template_lookup = ast.If(
+        test=ast.UnaryOp(
+            op=ast.Not(),
+            operand=ast.Call(
+                func=ast.Name(id='callable', ctx=ast.Load()),
+                args=[
+                    ast.Call(
+                        func=ast.Name(id='getattr', ctx=ast.Load()),
+                        args=[
+                            ast.Name(id=template_var, ctx=ast.Load()),
+                            ast.Str(s='render'),
+                            ast.NameConstant(value=None),
+                        ],
+                        keywords=[]),
+                ],
+                keywords=[])),
+        body=[
+            ast.Assign(
+                targets=[ast.Name(id=template_var, ctx=ast.Store())],
+                value=ast.Call(
+                    func=state.add_import(
+                        'django.template.loader', 'get_template'),
+                    args=[ast.Name(id=template_var, ctx=ast.Load())],
+                    keywords=[])),
+        ],
+        orelse=[])
+
+    # values = {
+    #     name: var.resolve(context),
+    #     ...
+    # }
+    values_kvs = [
+        (
+            ast.Str(s=name),
+            util.generate_resolve_variable(var, state, False)
+        )
+        for name, var in node.extra_context.items()
+    ]
+
+    values_assign = ast.Assign(
+        targets=[ast.Name(id=values_var, ctx=ast.Store())],
+        value=ast.Dict(
+            keys=[k for k, _ in values_kvs],
+            values=[v for _, v in values_kvs]))
+
+    preamble = [template_assign, template_lookup, values_assign]
+
+    if node.isolated_context:
+        # template.render(context.new(values))
+        result_expr = ast.Call(
+            func=ast.Attribute(
+                value=ast.Name(id=template_var, ctx=ast.Load()),
+                attr='render',
+                ctx=ast.Load()),
+            args=[
+                ast.Call(
+                    func=ast.Attribute(
+                        value=state.context_expr,
+                        attr='new',
+                        ctx=ast.Load()),
+                    args=[ast.Name(id=values_var, ctx=ast.Load())],
+                    keywords=[]),
+            ],
+            keywords=[])
+    else:
+        result_var = state.new_local_var()
+
+        # with context.push(**value):
+        #     result = template.render(context)
+        with_block = ast.With(
+            items=[
+                ast.withitem(
+                    context_expr=ast.Call(
+                        func=ast.Attribute(
+                            value=state.context_expr,
+                            attr='push',
+                            ctx=ast.Load()),
+                        args=[],
+                        keywords=[],
+                        kwargs=ast.Name(id=values_var, ctx=ast.Load())),
+                    optional_vars=None),
+            ],
+            body=[
+                ast.Assign(
+                    targets=[ast.Name(id=result_var, ctx=ast.Store())],
+                    value=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Name(id=template_var, ctx=ast.Load()),
+                            attr='render',
+                            ctx=ast.Load()),
+                        args=[state.context_expr],
+                        keywords=[]))
+            ])
+
+        preamble.append(with_block)
+
+        # result
+        result_expr = ast.Name(id=result_var, ctx=ast.Load())
+
+    return preamble, result_expr

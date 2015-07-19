@@ -21,7 +21,7 @@ def wrap_emit_expr(ns, state):
 
     stmts = []
 
-    for n in preamble + [result]:
+    for n in preamble + ([result] if result else []):
         if isinstance(n, ast.stmt):
             stmts.append(n)
         else:
