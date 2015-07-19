@@ -2,6 +2,7 @@
 import os
 import random
 import time
+import cProfile, pstats
 
 TIMER = time.perf_counter
 
@@ -30,7 +31,7 @@ def switch_loader_settings(new_param):
     loader.template_source_loaders = None
 
 
-def run_timings(template_name, iterations, ctx_dict):
+def run_timings(template_name, iterations, ctx_dict, profile=False):
     from django.template import Context
     from django.template.loader import get_template
 
@@ -38,10 +39,19 @@ def run_timings(template_name, iterations, ctx_dict):
     print('Found template {} for name {}'.format(template, template_name))
     # print('rendered: {}'.format(template.render(Context(ctx_dict))))
 
+    if profile:
+        profiler = cProfile.Profile()
+        profiler.enable()
+
     start_time = TIMER()
     for i in range(iterations):
         template.render(Context(ctx_dict))
     end_time = TIMER()
+
+    if profile:
+        profiler.disable()
+
+        pstats.Stats(profiler).dump_stats('profile.pstats')
 
     return (end_time - start_time) / iterations
 
@@ -80,7 +90,7 @@ def run_bench():
 
     switch_loader_settings(COMPILED_LOADER_SETTINGS)
     compiled_main = run_timings('benchmark/main.html', main_count, main_ctx)
-    compiled_loop = run_timings('benchmark/loop.html', loop_count, loop_ctx)
+    compiled_loop = run_timings('benchmark/loop.html', loop_count, loop_ctx)#, profile=True)
 
     print('Native main template:   {:.5}'.format(1000 * native_main))
     print('Compiled main template: {:.5}'.format(1000 * compiled_main))

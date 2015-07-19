@@ -6,7 +6,7 @@
 
     <ul>
         {% for elem in data %}
-            <li style="{{ elem.style }}">{% include "benchmark/fragments/item.html" with item=elem.data only %}</li>
+            <li style="{{ elem.style }}">{% include "benchmark/fragments/item.html" with item=elem.data %}</li>
         {% endfor %}
     </ul>
 
