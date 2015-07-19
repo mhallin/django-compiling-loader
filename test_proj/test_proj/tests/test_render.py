@@ -187,6 +187,25 @@ def test_lists(settings, template_name, var):
                             must_succeed=True)
 
 
+@pytest.mark.parametrize('template_name', [
+    'for_nested.html',
+])
+@pytest.mark.parametrize('var', [
+    [],
+    [0],
+    ['test', 'another', mark_safe('<mango>'), '<banana>'],
+])
+@pytest.mark.parametrize('var2', [
+    [],
+    [9],
+    ['a', 'bunch', 'of', 'words']
+])
+def test_two_lists(settings, template_name, var, var2):
+    assert_rendered_equally(settings, template_name,
+                            {'var': var, 'var2': var2},
+                            must_succeed=True)
+
+
 def test_fallback(settings):
     assert_rendered_equally(
         settings,
