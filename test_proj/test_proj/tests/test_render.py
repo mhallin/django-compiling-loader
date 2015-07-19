@@ -21,14 +21,13 @@ COMPILED_LOADER_SETTINGS = (
 def render(settings, template_name, context):
     loader.template_source_loaders = None
     original = get_template(template_name)
-    raises = False
+    raises = None
     result = None
 
     try:
         result = original.render(context)
     except (VariableDoesNotExist, AttributeError) as e:
-        print('Exception thrown', e)
-        raises = True
+        raises = e
 
     return raises, result
 
@@ -53,7 +52,12 @@ def assert_rendered_equally(settings, template_name, ctx_dict,
     compiled_raises, compiled_result = render_compiled(
         settings, template_name, Context(ctx_dict))
 
-    assert native_raises == compiled_raises
+    if bool(native_raises) != bool(compiled_raises):
+        if native_raises:
+            raise native_raises
+        if compiled_raises:
+            raise compiled_raises
+
     assert native_result == compiled_result
 
     if must_succeed:

@@ -1,5 +1,6 @@
 import ast
 
+from django.conf import settings
 from django.template import loader_tags, loader
 
 from .generator import generate_expression, generate_nodelist
@@ -236,6 +237,26 @@ def _generate_include_node(node, state):
         preamble.append(with_block)
 
         # result
+        result_expr = ast_builder.build_expr(state, lambda b: result_var)
+
+    if not settings.TEMPLATE_DEBUG:
+        result_var = ast_builder.new_local_var(state, 'result')
+
+        # try:
+        #     <body>
+        #     result_var = <result_expr>
+        # except:
+        #     result_var = ''
+        try_stmt = ast_builder.build_expr(
+            state,
+            lambda b: b.try_(
+                preamble + [
+                    b.assign(result_var, result_expr)
+                ],
+                b.except_(None, None, b.assign(result_var, ''))))
+
+        preamble = [try_stmt]
+
         result_expr = ast_builder.build_expr(state, lambda b: result_var)
 
     return util.copy_location(preamble, node), \

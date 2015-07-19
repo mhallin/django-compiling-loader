@@ -1,4 +1,3 @@
-import ast
 import os.path
 
 from . import generator, compiler_state
@@ -15,9 +14,12 @@ def convert_template(template, state):
 
 
 def compile_template(template):
+    origin_name = (os.path.basename(template.origin.name)
+                   if template.origin else '<unknown>')
+
     state = compiler_state.CompilerState()
     ast_mod = convert_template(template, state)
-    code_mod = compile(ast_mod, os.path.basename(template.origin.name), 'exec')
+    code_mod = compile(ast_mod, origin_name, 'exec')
 
     g = {}
     exec(code_mod, g, g)
