@@ -1,5 +1,6 @@
 import pytest
 
+from django.utils.safestring import mark_safe, mark_for_escaping
 from django.template.loader import get_template, Context
 from django.template import VariableDoesNotExist, loader
 
@@ -44,7 +45,8 @@ def render_compiled(settings, template_name, context):
     return render(settings, template_name, context)
 
 
-def assert_rendered_equally(settings, template_name, ctx_dict, expected=None):
+def assert_rendered_equally(settings, template_name, ctx_dict,
+                            expected=None, must_succeed=False):
     native_raises, native_result = render_native(
         settings, template_name, Context(ctx_dict))
 
@@ -53,6 +55,9 @@ def assert_rendered_equally(settings, template_name, ctx_dict, expected=None):
 
     assert native_raises == compiled_raises
     assert native_result == compiled_result
+
+    if must_succeed:
+        assert not native_raises
 
     if expected is not None:
         assert native_result == expected
@@ -129,9 +134,24 @@ def test_integer_var(settings, template_name, ctx_dict):
     'var_default_html.html',
     'var_default_var.html',
     'var_filters.html',
+    'var_safe_filter.html',
 ])
-def test_var_escaping(settings, template_name):
-    assert_rendered_equally(settings, template_name, {'var': '<html>'})
+@pytest.mark.parametrize('var', [
+    'test',
+    '<html>',
+    mark_safe('<html>'),
+    mark_for_escaping('<html>'),
+])
+@pytest.mark.parametrize('other', [
+    'test',
+    '<html>',
+    mark_safe('<html>'),
+    mark_for_escaping('<html>'),
+])
+def test_var_escaping(settings, template_name, var, other):
+    assert_rendered_equally(settings, template_name,
+                            {'var': var, 'other': other},
+                            must_succeed=True)
 
 
 @pytest.mark.parametrize('template_name,ctx_dict', [
