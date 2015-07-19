@@ -230,9 +230,13 @@ def _generate_block_node(node, state):
         ])
 
     # result
-    result_var_load = ast.Name(id=result_var, ctx=ast.Load())
+    result_var_load = util.copy_location(
+        ast.Name(id=result_var, ctx=ast.Load()),
+        node)
 
-    return [block_context_assign, block_assign, with_block], result_var_load
+    preamble = [block_context_assign, block_assign, with_block]
+
+    return util.copy_location(preamble, node), result_var_load
 
 
 @generate_expression.register(loader_tags.ExtendsNode)
@@ -332,11 +336,10 @@ def _generate_extends_node(node, state):
         args=[state.context_expr],
         keywords=[])
 
-    return [
-        block_context_insert,
-        block_context_assign,
-        add_blocks_call], \
-        parent_render
+    preamble = [block_context_insert, block_context_assign, add_blocks_call]
+
+    return util.copy_location(preamble, node), \
+        util.copy_location(parent_render, node)
 
 
 @generate_expression.register(loader_tags.IncludeNode)
@@ -456,4 +459,5 @@ def _generate_include_node(node, state):
         # result
         result_expr = ast.Name(id=result_var, ctx=ast.Load())
 
-    return preamble, result_expr
+    return util.copy_location(preamble, node), \
+        util.copy_location(result_expr, node)

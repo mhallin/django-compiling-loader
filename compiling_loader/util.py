@@ -4,6 +4,9 @@ from django.template.base import VariableDoesNotExist
 
 
 def copy_location(dest_node, src_node):
+    if isinstance(dest_node, (tuple, list)):
+        return [copy_location(n, src_node) for n in dest_node]
+
     if hasattr(src_node, 'source'):
         _, (lineno, col_offset) = src_node.source
     else:
