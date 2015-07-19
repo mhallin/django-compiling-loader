@@ -141,7 +141,8 @@ class CompilerState:
             ctx=ast.Load())
 
     def add_ivar(self, value):
-        if value in self._ivar_values:
+        if isinstance(value, collections.abc.Hashable) \
+                and value in self._ivar_values:
             key = self._ivar_values[value]
         else:
             key = 'ivar_{}'.format(self._ivar_counter)
