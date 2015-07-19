@@ -72,7 +72,8 @@ def assert_rendered_equally(settings, template_name, ctx_dict,
     'simple.html',
 ])
 def test_simple_no_context(settings, template_name):
-    assert_rendered_equally(settings, template_name, {})
+    assert_rendered_equally(settings, template_name, {},
+                            must_succeed=True)
 
 
 @pytest.mark.parametrize('template_name', [
@@ -130,7 +131,8 @@ def test_two_vars(settings, template_name, ctx_dict):
     {'var': 15},
 ])
 def test_integer_var(settings, template_name, ctx_dict):
-    assert_rendered_equally(settings, template_name, ctx_dict)
+    assert_rendered_equally(settings, template_name, ctx_dict,
+                            must_succeed=True)
 
 
 @pytest.mark.parametrize('template_name', [
@@ -164,7 +166,8 @@ def test_var_escaping(settings, template_name, var, other):
     ('var_filters.html', {'var': [1, 2, 3]}),
 ])
 def test_other_types(settings, template_name, ctx_dict):
-    assert_rendered_equally(settings, template_name, ctx_dict)
+    assert_rendered_equally(settings, template_name, ctx_dict,
+                            must_succeed=True)
 
 
 def test_fallback(settings):
