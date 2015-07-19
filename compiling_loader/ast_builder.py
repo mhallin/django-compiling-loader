@@ -24,6 +24,12 @@ class BaseExpression:
             slice=ast.Index(to_ast(key)),
             ctx=ast.Load()))
 
+    def __eq__(self, other):
+        return NativeASTWrapper(ast.Compare(
+            left=to_ast(self),
+            ops=[ast.Eq()],
+            comparators=[to_ast(other)]))
+
 
 class NativeASTWrapper(BaseExpression):
     def __init__(self, ast):
@@ -81,6 +87,19 @@ class Builder:
             body=to_stmt_list(body),
             orelse=to_stmt_list(orelse))
 
+    def for_(self, target, iter, body, orelse=[]):
+        target = to_ast(target)
+        target.ctx = ast.Store()
+        if isinstance(target, ast.Tuple):
+            for e in target.elts:
+                e.ctx = ast.Store()
+
+        return ast.For(
+            target=target,
+            iter=to_ast(iter),
+            body=to_stmt_list(body),
+            orelse=to_stmt_list(orelse))
+
     def with_(self, item, body):
         return ast.With(
             items=[ast.withitem(context_expr=to_ast(item))],
@@ -95,12 +114,18 @@ class Builder:
 
     def except_(self, type, name, body):
         return ast.ExceptHandler(
-            type=type,
-            name=name,
+            type=to_ast(type) if type else None,
+            name=to_ast(name) if name else None,
             body=to_stmt_list(body))
 
     def return_(self, value):
         return ast.Return(value=to_ast(value))
+
+    def is_(self, left, right):
+        return ast.Compare(
+            left=to_ast(left),
+            ops=[ast.Is()],
+            comparators=[to_ast(right)])
 
     def is_not(self, left, right):
         return ast.Compare(
@@ -119,11 +144,17 @@ class Builder:
             op=ast.Not(),
             operand=to_ast(operand))
 
-    def assign(self, target, value):
-        target = to_ast(target)
-        target.ctx = ast.Store()
+    def assign(self, targets, value):
+        targets = to_ast(targets)
 
-        return ast.Assign(targets=[target], value=to_ast(value))
+        if isinstance(targets, (list, tuple)):
+            for x in targets:
+                x.ctx = ast.Store()
+        else:
+            targets.ctx = ast.Store()
+            targets = [targets]
+
+        return ast.Assign(targets=targets, value=to_ast(value))
 
     def dict(self, d):
         kvs = [(to_ast(k), to_ast(v)) for k, v in d.items()]
@@ -133,8 +164,21 @@ class Builder:
             values=[v for _, v in kvs]
         ))
 
+    def list(self, l):
+        return NativeASTWrapper(ast.List(
+            elts=[to_ast(i) for i in l],
+            ctx=ast.Load()))
+
+    def tuple(self, t):
+        return NativeASTWrapper(ast.Tuple(
+            elts=[to_ast(i) for i in t],
+            ctx=ast.Load()))
+
     def str(self, s):
         return NativeASTWrapper(ast.Str(s=s))
+
+    def pass_(self):
+        return ast.Pass()
 
     def __getitem__(self, key):
         if hasattr(key, '__module__') and hasattr(key, '__name__'):
@@ -184,8 +228,10 @@ def to_ast(obj):
         return obj
     if isinstance(obj, (list, tuple)):
         return [to_ast(i) for i in obj]
-    if obj in (None, True, False):
+    if obj is None or type(obj) == bool:
         return ast.NameConstant(obj)
+    if isinstance(obj, int):
+        return ast.Num(obj)
 
     raise NotImplementedError(
         'Type not supported by AST builder: {}'.format(obj))

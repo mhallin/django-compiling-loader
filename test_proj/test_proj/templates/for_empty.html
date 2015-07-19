@@ -1,0 +1,10 @@
+{{ x }}
+{% for x in var %}
+    {{ forloop.counter }} {{ forloop.counter0 }} {{ forloop.revcounter }} {{ forloop.revcounter0 }}
+    {{ forloop.first }} {{ forloop.last }} {{ forloop.parentloop }}
+
+    {{ x }}
+{% empty %}
+    Was empty! {{ forloop.counter }}
+{% endfor %}
+{{ x }}

@@ -170,6 +170,23 @@ def test_other_types(settings, template_name, ctx_dict):
                             must_succeed=True)
 
 
+@pytest.mark.parametrize('template_name', [
+    'for.html',
+    'for_no_exist.html',
+    'for_empty.html',
+    'for_unpack.html',
+    'for_reverse.html',
+])
+@pytest.mark.parametrize('var', [
+    [],
+    [0],
+    ['test', 'another', mark_safe('<mango>'), '<banana>'],
+])
+def test_lists(settings, template_name, var):
+    assert_rendered_equally(settings, template_name, {'var': var},
+                            must_succeed=True)
+
+
 def test_fallback(settings):
     assert_rendered_equally(
         settings,
