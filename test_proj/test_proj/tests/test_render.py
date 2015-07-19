@@ -68,8 +68,8 @@ def assert_rendered_equally(settings, template_name, ctx_dict,
 
 
 @pytest.mark.parametrize('template_name', [
-    'empty.html',
-    'simple.html',
+    'tests/empty.html',
+    'tests/simple.html',
 ])
 def test_simple_no_context(settings, template_name):
     assert_rendered_equally(settings, template_name, {},
@@ -77,30 +77,30 @@ def test_simple_no_context(settings, template_name):
 
 
 @pytest.mark.parametrize('template_name', [
-    'var.html',
-    'var_default.html',
-    'var_default_var.html',
-    'var_filters.html',
-    'if.html',
-    'if_elif.html',
-    'if_elif_else.html',
-    'if_else.html',
-    'if_eq.html',
-    'if_eqeq.html',
-    'if_or.html',
-    'if_and.html',
-    'if_not.html',
-    'if_in.html',
-    'if_not_in.html',
-    'if_neq.html',
-    'extend_base.html',
-    'extend_child_empty.html',
-    'extend_child_override.html',
-    'extend_child_super.html',
-    'extend_child_super_twice.html',
-    'extend_child_child_empty.html',
-    'extend_base_super.html',
-    'include.html',
+    'tests/var.html',
+    'tests/var_default.html',
+    'tests/var_default_var.html',
+    'tests/var_filters.html',
+    'tests/if.html',
+    'tests/if_elif.html',
+    'tests/if_elif_else.html',
+    'tests/if_else.html',
+    'tests/if_eq.html',
+    'tests/if_eqeq.html',
+    'tests/if_or.html',
+    'tests/if_and.html',
+    'tests/if_not.html',
+    'tests/if_in.html',
+    'tests/if_not_in.html',
+    'tests/if_neq.html',
+    'tests/extend_base.html',
+    'tests/extend_child_empty.html',
+    'tests/extend_child_override.html',
+    'tests/extend_child_super.html',
+    'tests/extend_child_super_twice.html',
+    'tests/extend_child_child_empty.html',
+    'tests/extend_base_super.html',
+    'tests/include.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},
@@ -118,10 +118,10 @@ def test_two_vars(settings, template_name, ctx_dict):
 
 
 @pytest.mark.parametrize('template_name', [
-    'if_gt.html',
-    'if_ge.html',
-    'if_lt.html',
-    'if_le.html',
+    'tests/if_gt.html',
+    'tests/if_ge.html',
+    'tests/if_lt.html',
+    'tests/if_le.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},
@@ -136,11 +136,11 @@ def test_integer_var(settings, template_name, ctx_dict):
 
 
 @pytest.mark.parametrize('template_name', [
-    'var.html',
-    'var_default_html.html',
-    'var_default_var.html',
-    'var_filters.html',
-    'var_safe_filter.html',
+    'tests/var.html',
+    'tests/var_default_html.html',
+    'tests/var_default_var.html',
+    'tests/var_filters.html',
+    'tests/var_safe_filter.html',
 ])
 @pytest.mark.parametrize('var', [
     'test',
@@ -161,9 +161,9 @@ def test_var_escaping(settings, template_name, var, other):
 
 
 @pytest.mark.parametrize('template_name,ctx_dict', [
-    ('var.html', {'var': [1, 2, 3]}),
-    ('var_default.html', {'var': []}),
-    ('var_filters.html', {'var': [1, 2, 3]}),
+    ('tests/var.html', {'var': [1, 2, 3]}),
+    ('tests/var_default.html', {'var': []}),
+    ('tests/var_filters.html', {'var': [1, 2, 3]}),
 ])
 def test_other_types(settings, template_name, ctx_dict):
     assert_rendered_equally(settings, template_name, ctx_dict,
@@ -171,11 +171,11 @@ def test_other_types(settings, template_name, ctx_dict):
 
 
 @pytest.mark.parametrize('template_name', [
-    'for.html',
-    'for_no_exist.html',
-    'for_empty.html',
-    'for_unpack.html',
-    'for_reverse.html',
+    'tests/for.html',
+    'tests/for_no_exist.html',
+    'tests/for_empty.html',
+    'tests/for_unpack.html',
+    'tests/for_reverse.html',
 ])
 @pytest.mark.parametrize('var', [
     [],
@@ -188,7 +188,7 @@ def test_lists(settings, template_name, var):
 
 
 @pytest.mark.parametrize('template_name', [
-    'for_nested.html',
+    'tests/for_nested.html',
 ])
 @pytest.mark.parametrize('var', [
     [],
@@ -209,7 +209,7 @@ def test_two_lists(settings, template_name, var, var2):
 def test_fallback(settings):
     assert_rendered_equally(
         settings,
-        'block_upper.html',
+        'tests/block_upper.html',
         {},
         expected='\nSOME UPPERCASED TEXT\n'
     )

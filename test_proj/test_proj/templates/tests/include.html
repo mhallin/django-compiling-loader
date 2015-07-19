@@ -1,0 +1,11 @@
+{% include "tests/var_default_var.html" %}
+{% include "tests/var_default.html" only %}
+
+{% include "tests/var_default_var.html" with var="set here" %}
+{% include "tests/var_default.html" with var="set here" only %}
+
+{% include "tests/var_default_var.html" with other="set here" %}
+{% include "tests/var_default_var.html" with other="set here" only %}
+
+{% include "tests/var_default_var.html" with var="set here" other="also set here" %}
+{% include "tests/var_default_var.html" with var="set here" other="also set here" only %}
