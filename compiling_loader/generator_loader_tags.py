@@ -5,6 +5,27 @@ from django.template import loader_tags
 from .generator import generate_expression, generate_nodelist
 
 
+class BlockWrapper:
+    def __init__(self, context, block_name):
+        self.context = context
+        self.block_name = block_name
+
+    def super(self):
+        block_context = self.context.render_context.get(
+            loader_tags.BLOCK_CONTEXT_KEY)
+
+        if block_context is None:
+            raise AttributeError(
+                'No block context; maybe invalid block.super call?')
+
+        block = block_context.get_block(self.block_name)
+
+        if block is None:
+            return ''
+
+        return block(self.context)
+
+
 def _block_method_name(name):
     return 'block_render_{}'.format(name)
 
@@ -12,8 +33,29 @@ def _block_method_name(name):
 def _emit_block_render_method(node, state):
     body = generate_nodelist(node.nodelist, state)
 
+    block_context_var = state.new_local_var()
+    block_var = state.new_local_var()
+
+    # block_context = context.render_context.get(BLOCK_CONTEXT_KEY)
+    block_context_assign = ast.Assign(
+        targets=[ast.Name(id=block_context_var, ctx=ast.Store())],
+        value=ast.Call(
+            func=ast.Attribute(
+                value=ast.Attribute(
+                    value=state.context_expr,
+                    attr='render_context',
+                    ctx=ast.Load()),
+                attr='get',
+                ctx=ast.Load()),
+            args=[ast.Str(s=loader_tags.BLOCK_CONTEXT_KEY)],
+            keywords=[]))
+
     # with context.push():
+    #    if block_context is not None:
+    #        block = block_context.pop(name)
     #    <body>
+    #    if block_context is not None:
+    #        block_context.push(name, block)
     with_context_push = ast.With(
         items=[
             ast.withitem(
@@ -26,10 +68,53 @@ def _emit_block_render_method(node, state):
                     keywords=[]),
                 optional_vars=None),
         ],
-        body=body)
+        body=[
+            ast.If(
+                test=ast.Compare(
+                    left=ast.Name(id=block_context_var, ctx=ast.Load()),
+                    ops=[ast.IsNot()],
+                    comparators=[ast.NameConstant(value=None)]),
+                body=[
+                    ast.Assign(
+                        targets=[ast.Name(id=block_var, ctx=ast.Store())],
+                        value=ast.Call(
+                            func=ast.Attribute(
+                                value=ast.Name(
+                                    id=block_context_var,
+                                    ctx=ast.Load()),
+                                attr='pop',
+                                ctx=ast.Load()),
+                            args=[ast.Str(s=node.name)],
+                            keywords=[])),
+                ],
+                orelse=[]),
+        ]
+        + body
+        + [
+            ast.If(
+                test=ast.Compare(
+                    left=ast.Name(id=block_context_var, ctx=ast.Load()),
+                    ops=[ast.IsNot()],
+                    comparators=[ast.NameConstant(value=None)]),
+                body=[
+                    ast.Expr(value=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Name(
+                                id=block_context_var,
+                                ctx=ast.Load()),
+                            attr='push',
+                            ctx=ast.Load()),
+                        args=[
+                            ast.Str(s=node.name),
+                            ast.Name(id=block_var, ctx=ast.Load()),
+                        ],
+                        keywords=[])),
+                ],
+                orelse=[]),
+        ])
 
     state.add_render_function(
-        [with_context_push],
+        [block_context_assign, with_context_push],
         _block_method_name(node.name))
 
 
@@ -39,6 +124,7 @@ def _generate_block_node(node, state):
 
     block_context_var = state.new_local_var()
     block_var = state.new_local_var()
+    result_var = state.new_local_var()
 
     # block_context = context.render_context.get(BLOCK_CONTEXT_KEY)
     block_context_assign = ast.Assign(
@@ -100,13 +186,52 @@ def _generate_block_node(node, state):
                     ctx=ast.Load())),
         ])
 
-    # block()
-    block_render_call = ast.Call(
-        func=ast.Name(id=block_var, ctx=ast.Load()),
-        args=[state.context_expr],
-        keywords=[])
+    # with context.push():
+    #     context['block'] = BlockWrapper(context, name)
+    #     result = block()
+    with_block = ast.With(
+        items=[
+            ast.withitem(
+                context_expr=ast.Call(
+                    func=ast.Attribute(
+                        value=state.context_expr,
+                        attr='push',
+                        ctx=ast.Load()),
+                    args=[],
+                    keywords=[]),
+                optional_vars=None),
+        ],
+        body=[
+            ast.Assign(
+                targets=[
+                    ast.Subscript(
+                        value=state.context_expr,
+                        slice=ast.Index(value=ast.Str(s='block')),
+                        ctx=ast.Store())
+                ],
+                value=ast.Call(
+                    func=state.add_import(
+                        'compiling_loader.generator_loader_tags',
+                        'BlockWrapper'),
+                    args=[
+                        state.context_expr,
+                        ast.Str(s=node.name),
+                    ],
+                    keywords=[])),
+            ast.Assign(
+                targets=[
+                    ast.Name(id=result_var, ctx=ast.Store()),
+                ],
+                value=ast.Call(
+                    func=ast.Name(id=block_var, ctx=ast.Load()),
+                    args=[state.context_expr],
+                    keywords=[])),
+        ])
 
-    return [block_context_assign, block_assign], block_render_call
+    # result
+    result_var_load = ast.Name(id=result_var, ctx=ast.Load())
+
+    return [block_context_assign, block_assign, with_block], result_var_load
 
 
 @generate_expression.register(loader_tags.ExtendsNode)

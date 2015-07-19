@@ -1,0 +1,5 @@
+{% extends "extend_base.html" %}
+
+{% block b1 %}in child template: {{ var }}, super call: {{ block.super }}{% endblock b1 %}
+
+{% block b2 %}other block: {{ block.super }}{% endblock b2 %}

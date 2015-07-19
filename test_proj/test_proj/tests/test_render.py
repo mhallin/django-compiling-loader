@@ -25,7 +25,7 @@ def render(settings, template_name, context):
 
     try:
         original_result = original.render(context)
-    except VariableDoesNotExist:
+    except (VariableDoesNotExist, AttributeError):
         original_raises = True
 
     return original_raises, original_result
@@ -85,6 +85,10 @@ def test_simple_no_context(settings, template_name):
     'extend_base.html',
     'extend_child_empty.html',
     'extend_child_override.html',
+    'extend_child_super.html',
+    'extend_child_super_twice.html',
+    'extend_child_child_empty.html',
+    'extend_base_super.html',
 ])
 @pytest.mark.parametrize('ctx_dict', [
     {},
