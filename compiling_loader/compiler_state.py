@@ -68,15 +68,15 @@ class CompilerState:
 
         buf_assign = ast_builder.build_stmt(
             self,
-            lambda b: b.assign(buf_var, b[io.StringIO]()))
+            lambda b: b.assign(buf_var, b.list([])))
 
         emit_assign = ast_builder.build_stmt(
             self,
-            lambda b: b.assign(b.emit, buf_var.write))
+            lambda b: b.assign(b.emit, buf_var.append))
 
         result_return = ast_builder.build_stmt(
             self,
-            lambda b: b.return_(buf_var.getvalue()))
+            lambda b: b.return_(b.str('').join(buf_var)))
 
         return self.make_function_def(
             [buf_assign, emit_assign] + body + [result_return],
