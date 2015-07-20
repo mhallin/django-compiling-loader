@@ -19,6 +19,18 @@ def generate_filter_expression(filter_expression, state, fallback_value=None):
     return result
 
 
+def is_constant(filter_expression):
+    return isinstance(filter_expression.var, str) \
+        and len(filter_expression.filters) == 0
+
+
+def get_constant_value(filter_expression):
+    if is_constant(filter_expression):
+        return filter_expression.var
+
+    raise ValueError('Filter expression is not constant')
+
+
 def _generate_filter(func, first_arg, args, state):
     arg_vals = []
 

@@ -3,9 +3,8 @@ import ast
 from functools import singledispatch
 
 from django.template import base
-from django.template.base import render_value_in_context
 
-from . import ast_builder, util, generator_flt_expr
+from . import ast_builder, util, generator_flt_expr, html
 
 
 @singledispatch
@@ -32,7 +31,7 @@ def _generate_variable_node(node, compiler_state):
     return [], util.copy_location(
         ast_builder.build_expr(
             compiler_state,
-            lambda b: b[render_value_in_context](output, b.context)),
+            lambda b: b[html.fast_render_value_in_context](output, b.context)),
         node)
 
 

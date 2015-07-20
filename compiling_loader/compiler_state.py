@@ -1,6 +1,5 @@
 import ast
 import collections.abc
-import io
 
 from . import ast_builder
 

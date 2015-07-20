@@ -4,7 +4,7 @@ from django.conf import settings
 from django.template import loader_tags, loader
 
 from .generator import generate_expression, generate_nodelist
-from . import util, ast_builder
+from . import util, ast_builder, generator_flt_expr
 
 
 class BlockWrapper:
@@ -172,10 +172,20 @@ def _generate_extends_node(node, state):
             for name in node.blocks.keys()
         })))
 
-    # node.get_parent(context).render(context)
-    parent_render = ast_builder.build_expr(
-        state,
-        lambda b: b.ivars[node].get_parent(b.context).render(b.context))
+    if generator_flt_expr.is_constant(node.parent_name):
+        # Lookup parent template statically if the referenced
+        # name is a constant
+        parent_template = loader.get_template(
+            generator_flt_expr.get_constant_value(node.parent_name))
+
+        parent_render = ast_builder.build_expr(
+            state,
+            lambda b: b.ivars[parent_template].render(b.context))
+    else:
+        # node.get_parent(context).render(context)
+        parent_render = ast_builder.build_expr(
+            state,
+            lambda b: b.ivars[node].get_parent(b.context).render(b.context))
 
     preamble = [block_context_insert, block_context_assign, add_blocks_call]
 
@@ -188,35 +198,44 @@ def _generate_include_node(node, state):
     template_var = ast_builder.new_local_var(state, 'template')
     values_var = ast_builder.new_local_var(state, 'values')
 
-    # template = node.template.resolve(context)
-    template_assign = ast_builder.build_stmt(
-        state,
-        lambda b: b.assign(
-            template_var,
-            b.ivars[node.template].resolve(b.context)))
+    preamble = []
 
-    # if not callable(getattr(template, 'render', None)):
-    #     template = get_template(template)
-    template_lookup = ast_builder.build_stmt(
-        state,
-        lambda b: b.if_(
-            b.not_(b[callable](b[getattr](template_var, 'render', None))),
-            b.assign(template_var, b[loader.get_template](template_var))))
+    if generator_flt_expr.is_constant(node.template):
+        # Look up the included template statically if the referenced
+        # name is a constant
+        template = loader.get_template(
+            generator_flt_expr.get_constant_value(node.template))
+        preamble.append(ast_builder.build_stmt(
+            state,
+            lambda b: b.assign(template_var, b.ivars[template])))
+    else:
+        # template = node.template.resolve(context)
+        preamble.append(ast_builder.build_stmt(
+            state,
+            lambda b: b.assign(
+                template_var,
+                b.ivars[node.template].resolve(b.context))))
+
+        # if not callable(getattr(template, 'render', None)):
+        #     template = get_template(template)
+        preamble.append(ast_builder.build_stmt(
+            state,
+            lambda b: b.if_(
+                b.not_(b[callable](b[getattr](template_var, 'render', None))),
+                b.assign(template_var, b[loader.get_template](template_var)))))
 
     # values = {
     #     name: var.resolve(context),
     #     ...
     # }
-    values_assign = ast_builder.build_stmt(
+    preamble.append(ast_builder.build_stmt(
         state,
         lambda b: b.assign(
             values_var,
             b.dict({
                 name: util.generate_resolve_variable(var, state, False)
                 for name, var in node.extra_context.items()
-            })))
-
-    preamble = [template_assign, template_lookup, values_assign]
+            }))))
 
     if node.isolated_context:
         # template.render(context.new(values))
