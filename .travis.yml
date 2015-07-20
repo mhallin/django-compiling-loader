@@ -1,0 +1,13 @@
+language: python
+python:
+  - '3.4'
+
+install:
+  - pip install '.[test]'
+  - pip install coveralls
+
+script:
+  - (cd test_proj; py.test)
+
+after_success:
+  - (cd test_proj; coveralls)
