@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='django_compiling_loader',
+    name='django-compiling-loader',
     version='0.0.1',
     packages=find_packages(exclude=['test_proj']),
 
