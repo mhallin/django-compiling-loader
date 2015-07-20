@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-compiling-loader',
-    version='0.0.1',
+    version='0.0.2',
     packages=find_packages(exclude=['test_proj']),
 
     url='https://github.com/mhallin/django-compiling-loader',
