@@ -72,6 +72,6 @@ comparisons:
 =========  =======  ========  =======
 Template   Default  Compiled  Speedup
 =========  =======  ========  =======
-Small      0.21 ms  0.10 ms   2,1x
-Large      125 ms   42 ms     3,0x
+Small      0.21 ms  0.10 ms   2.1x
+Large      125 ms   42 ms     3.0x
 =========  =======  ========  =======
