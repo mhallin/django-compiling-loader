@@ -67,6 +67,15 @@ def assert_rendered_equally(settings, template_name, ctx_dict,
         assert native_result == expected
 
 
+def test_nodelist_present(settings):
+    settings.TEMPLATE_LOADERS = COMPILED_LOADER_SETTINGS
+    loader.template_source_loaders = None
+
+    template = get_template('tests/for.html')
+
+    assert template.nodelist is not None
+
+
 @pytest.mark.parametrize('template_name', [
     'tests/empty.html',
     'tests/simple.html',

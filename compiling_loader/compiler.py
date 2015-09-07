@@ -25,6 +25,7 @@ def compile_template(template):
     exec(code_mod, g, g)
 
     instance = g['CompiledTemplate']()
+    instance.nodelist = template.nodelist
 
     for key, val in state.ivars.items():
         setattr(instance, key, val)
